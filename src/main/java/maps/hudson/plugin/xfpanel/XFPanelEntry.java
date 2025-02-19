@@ -2,19 +2,18 @@ package maps.hudson.plugin.xfpanel;
 
 import hudson.Functions;
 import hudson.Plugin;
-import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Job;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.User;
 import hudson.plugins.claim.ClaimBuildAction;
 import hudson.plugins.claim.ClaimTestAction;
 import hudson.scm.ChangeLogSet.Entry;
-import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.junit.CaseResult;
+import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.test.AbstractTestResultAction;
-
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,15 +22,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import jenkins.model.Jenkins;
 import maps.hudson.plugin.xfpanel.XFPanelView.Blame;
 
 /**
  * Represents a job to be shown on the panel
- * 
+ *
  * Intermediates access to data available for the given Job
- * 
+ *
  * @author jrenaut
  */
 public final class XFPanelEntry {
@@ -46,7 +44,7 @@ public final class XFPanelEntry {
     private Calendar completionTimestamp;
     private XFPanelView view;
 
-		/**
+    /**
      * C'tor
      * @param job the job to be represented
      */
@@ -58,7 +56,7 @@ public final class XFPanelEntry {
     public void init() {
         this.findStatus();
         this.setTimes();
-	}
+    }
     /**
      * @return the job
      */
@@ -72,7 +70,7 @@ public final class XFPanelEntry {
     public String getName() {
         Pattern pattern = getView().getJobNameReplaceRegExpPattern();
         String label = job.getDisplayName();
-        if (pattern  != null) {
+        if (pattern != null) {
             String repl = getView().getJobNameReplacement();
             if (repl == null) {
                 repl = "";
@@ -98,13 +96,13 @@ public final class XFPanelEntry {
      */
     public Integer getQueueNumber() {
         // placeInQueue==null right after deserialization because it's transient
-        return getView().placeInQueue==null ? null : getView().placeInQueue.get(this.job.getQueueItem());
+        return getView().placeInQueue == null ? null : getView().placeInQueue.get(this.job.getQueueItem());
     }
 
     public AbstractBuild<?, ?> getLastBuild() {
         Run<?, ?> run = this.job.getLastBuild();
         if (run instanceof AbstractBuild<?, ?>) {
-            AbstractBuild<?, ?> lastBuild = (AbstractBuild<?, ?>)run;
+            AbstractBuild<?, ?> lastBuild = (AbstractBuild<?, ?>) run;
             return lastBuild;
         }
         return null;
@@ -113,7 +111,7 @@ public final class XFPanelEntry {
     private void setTimes() {
         Run<?, ?> run = this.job.getLastCompletedBuild();
         if (run instanceof AbstractBuild<?, ?>) {
-            AbstractBuild<?, ?> lastBuild = (AbstractBuild<?, ?>)run;
+            AbstractBuild<?, ?> lastBuild = (AbstractBuild<?, ?>) run;
             if (lastBuild != null) {
                 this.completionTimestamp = lastBuild.getTimestamp();
                 this.completionTimestampString = lastBuild.getTimestampString();
@@ -169,8 +167,7 @@ public final class XFPanelEntry {
      *  @return 1 on success
      */
     public Boolean getShowResponsibles() {
-        if (getView().BlameState == XFPanelView.Blame.NOTATALL)
-            return false;
+        if (getView().BlameState == XFPanelView.Blame.NOTATALL) return false;
         return true;
     }
 
@@ -191,9 +188,9 @@ public final class XFPanelEntry {
     /**
      * @return a list will all the currently building runs for this job.
      */
-    public List<Run<? , ?>> getBuildsInProgress() {
+    public List<Run<?, ?>> getBuildsInProgress() {
         List<Run<?, ?>> runs = new ArrayList<Run<?, ?>>();
-        Run<?, ? > run = this.job.getLastBuild();
+        Run<?, ?> run = this.job.getLastBuild();
         if (run.isBuilding()) {
             runs.add(run);
         }
@@ -270,7 +267,7 @@ public final class XFPanelEntry {
                 if (tests != null && prevTests != null) {
                     int currentSuccess = tests.getTotalCount() - tests.getFailCount();
                     int prevSuccess = prevTests.getTotalCount() - prevTests.getFailCount();
-                    return Functions.getDiffString(currentSuccess-prevSuccess);
+                    return Functions.getDiffString(currentSuccess - prevSuccess);
                 }
             }
         }
@@ -279,24 +276,23 @@ public final class XFPanelEntry {
 
     /**
      * @param run a run
-     * @return the last successful run prior to the given run 
+     * @return the last successful run prior to the given run
      */
     private Run<?, ?> getLastSuccessfulFrom(Run<?, ?> run) {
         Run<?, ?> r = run.getPreviousBuild();
         while (r != null
-                && (r.isBuilding() || r.getResult() == null || r.getResult()
-                        .isWorseThan(Result.UNSTABLE))) {
+                && (r.isBuilding() || r.getResult() == null || r.getResult().isWorseThan(Result.UNSTABLE))) {
             r = r.getPreviousBuild();
         }
         return r;
     }
 
     /**
-     * Elects culprit(s)/responsible(s) for a broken build by choosing the last commiter of a given build 
-     * 
+     * Elects culprit(s)/responsible(s) for a broken build by choosing the last commiter of a given build
+     *
      * @return the culprit(s)/responsible(s)
      */
-    public HashSet<User> getCulpritFromBuild( AbstractBuild<?, ?> build ){
+    public HashSet<User> getCulpritFromBuild(AbstractBuild<?, ?> build) {
         HashSet<User> r = new HashSet<User>();
         for (Entry e : build.getChangeSet()) {
             r.add(e.getAuthor());
@@ -308,7 +304,7 @@ public final class XFPanelEntry {
         String output = "";
         Iterator<User> it = input.iterator();
 
-        int i=0;
+        int i = 0;
         for (; it.hasNext(); i++) {
             if (i < getView().getMaxAmmountOfResponsibles()) {
                 output += it.next().getFullName() + ((it.hasNext()) ? ", " : "");
@@ -316,37 +312,36 @@ public final class XFPanelEntry {
                 it.next();
             }
         }
-        if (i > getView().getMaxAmmountOfResponsibles()){
-            output += "... <"+ (i-getView().getMaxAmmountOfResponsibles()) + " more>";
+        if (i > getView().getMaxAmmountOfResponsibles()) {
+            output += "... <" + (i - getView().getMaxAmmountOfResponsibles()) + " more>";
         }
-        if (!output.isEmpty())
-            return output;
+        if (!output.isEmpty()) return output;
         return " - ";
     }
 
     public String getCulprits() {
         if (getView().BlameState == Blame.ONLYFIRSTFAILEDBUILD) {
-            Run<?, ?> run = this.job.getLastStableBuild(); //getLastSuccessfulBuild();
-            if ( run == null ){ // if there aren't any successful builds
-                run = this.job.getFirstBuild(); 
+            Run<?, ?> run = this.job.getLastStableBuild(); // getLastSuccessfulBuild();
+            if (run == null) { // if there aren't any successful builds
+                run = this.job.getFirstBuild();
             } else {
                 run = run.getNextBuild();
             }
             if (run instanceof AbstractBuild<?, ?>) {
                 AbstractBuild<?, ?> firstFailedBuild = (AbstractBuild<?, ?>) run;
-                return convertCulpritsToString( getCulpritFromBuild( firstFailedBuild ) );
+                return convertCulpritsToString(getCulpritFromBuild(firstFailedBuild));
             }
         } else if (getView().BlameState == Blame.ONLYLASTFAILEDBUILD) {
             Run<?, ?> run = this.job.getLastFailedBuild();
             if (run instanceof AbstractBuild<?, ?>) {
                 AbstractBuild<?, ?> lastFailedBuild = (AbstractBuild<?, ?>) run;
-                return convertCulpritsToString( getCulpritFromBuild( lastFailedBuild ) );
+                return convertCulpritsToString(getCulpritFromBuild(lastFailedBuild));
             }
         } else if (getView().BlameState == Blame.EVERYINVOLVED) {
             AbstractBuild<?, ?> build = this.getLastBuild();
             if (build != null) {
-	            HashSet<User> BlameList = new HashSet<User>( build.getCulprits() );
-	            return convertCulpritsToString( BlameList );
+                HashSet<User> BlameList = new HashSet<User>(build.getCulprits());
+                return convertCulpritsToString(BlameList);
             }
         }
         return " -";
@@ -354,7 +349,7 @@ public final class XFPanelEntry {
 
     /**
      * If the claims plugin is installed, this will return ClaimBuildAction
-     * 
+     *
      * @return claim on the build / null
      */
     private ClaimBuildAction getClaimAction() {
@@ -388,7 +383,7 @@ public final class XFPanelEntry {
             if (cba != null) {
                 result = cba.isClaimed();
             }
-            if (result == false){
+            if (result == false) {
                 final int claimedTests = getNumClaimedTests();
                 final int totalTests = getFailCount();
                 if (totalTests > 0 && claimedTests == totalTests) {
@@ -413,7 +408,7 @@ public final class XFPanelEntry {
             if (claimAction.isClaimed()) {
                 String name = claimAction.getClaimedByName();
                 // String reason = claimAction.getReason();
-                if (name != null){
+                if (name != null) {
                     return name;
                 }
             }
@@ -421,22 +416,22 @@ public final class XFPanelEntry {
         return "";
     }
 
-    public hudson.tasks.junit.TestResult getClaimedTestCases(){
-    	Plugin plugin = Jenkins.getInstance().getPlugin("claim");
-    	if (plugin != null) {
+    public hudson.tasks.junit.TestResult getClaimedTestCases() {
+        Plugin plugin = Jenkins.getInstance().getPlugin("claim");
+        if (plugin != null) {
             Run<?, ?> lastBuild = job.getLastBuild();
             if (lastBuild == null) {
                 return null;
             }
             // if building check previous status
-            if (lastBuild.isBuilding()){
+            if (lastBuild.isBuilding()) {
                 lastBuild = (AbstractBuild<?, ?>) lastBuild.getPreviousBuild();
-                if (lastBuild == null){
+                if (lastBuild == null) {
                     return null;
                 }
             }
             List<TestResultAction> results = lastBuild.getActions(TestResultAction.class);
-            if ( results == null || results.size() == 0) {
+            if (results == null || results.size() == 0) {
                 return null;
             }
             return results.get(0).getResult();
@@ -444,7 +439,7 @@ public final class XFPanelEntry {
         return null;
     }
 
-    public String getClaimInfoByTestCases(){
+    public String getClaimInfoByTestCases() {
         hudson.tasks.junit.TestResult testResult = getClaimedTestCases();
         if (testResult == null) {
             return "";
@@ -500,10 +495,10 @@ public final class XFPanelEntry {
     /**
      * Returns number of failed tests or number of unclaimed failed tests
      */
-    public String getNumberOfTests(){
+    public String getNumberOfTests() {
         final int failedTests = getFailCount();
         if (failedTests == 0 && getView().getShowZeroTestCounts() == false) {
-                return "";
+            return "";
         }
         if (getView().getReplaceNumberOfTestCases()) {
             final int claimedTests = getNumClaimedTests();
@@ -540,8 +535,8 @@ public final class XFPanelEntry {
         return "";
     }
 
-    public String getBuildStatus(AbstractBuild<?, ?> build){
-        if (build == null){
+    public String getBuildStatus(AbstractBuild<?, ?> build) {
+        if (build == null) {
             return "UNBUILT";
         }
         if (build.isBuilding()) {
@@ -564,7 +559,7 @@ public final class XFPanelEntry {
         return false;
     }
 
-    public boolean isBuildUnstable(){
+    public boolean isBuildUnstable() {
         AbstractBuild<?, ?> build = this.getLastBuild();
         if (build != null) {
             String buildStatus = getBuildStatus(build);
@@ -578,39 +573,39 @@ public final class XFPanelEntry {
      */
     private void findStatus() {
         switch (this.job.getIconColor()) {
-        case BLUE_ANIME:
-            this.building = true;
-        case BLUE:
-            this.backgroundColor = getView().getColors().getOkBG(); 
-            this.color = getView().getColors().getOkFG();
-            this.colorFade = "build-fade-ok.png";
-            this.broken = false;
-            break;
-        case YELLOW_ANIME:
-            this.building = true;
-        case YELLOW:
-            this.backgroundColor = getView().getColors().getFailedBG(); 
-            this.color = getView().getColors().getFailedFG();
-            this.colorFade = "build-fade-fail.png";
-            this.broken = false;
-            break;
-        case RED_ANIME:
-            this.building = true;
-        case RED:
-            this.backgroundColor = getView().getColors().getBrokenBG(); 
-            this.color = getView().getColors().getBrokenFG();
-            this.colorFade = "build-fade-broken.png";
-            this.broken = true;
-            break;
-        case GREY_ANIME:
-        case DISABLED_ANIME:
-        case ABORTED_ANIME:
-            this.building = true;
-        default:
-            this.backgroundColor = getView().getColors().getOtherBG(); 
-            this.color = getView().getColors().getOtherFG();
-            this.colorFade = "build-fade-other.png";
-            this.broken = true;
+            case BLUE_ANIME:
+                this.building = true;
+            case BLUE:
+                this.backgroundColor = getView().getColors().getOkBG();
+                this.color = getView().getColors().getOkFG();
+                this.colorFade = "build-fade-ok.png";
+                this.broken = false;
+                break;
+            case YELLOW_ANIME:
+                this.building = true;
+            case YELLOW:
+                this.backgroundColor = getView().getColors().getFailedBG();
+                this.color = getView().getColors().getFailedFG();
+                this.colorFade = "build-fade-fail.png";
+                this.broken = false;
+                break;
+            case RED_ANIME:
+                this.building = true;
+            case RED:
+                this.backgroundColor = getView().getColors().getBrokenBG();
+                this.color = getView().getColors().getBrokenFG();
+                this.colorFade = "build-fade-broken.png";
+                this.broken = true;
+                break;
+            case GREY_ANIME:
+            case DISABLED_ANIME:
+            case ABORTED_ANIME:
+                this.building = true;
+            default:
+                this.backgroundColor = getView().getColors().getOtherBG();
+                this.color = getView().getColors().getOtherFG();
+                this.colorFade = "build-fade-other.png";
+                this.broken = true;
         }
     }
 
@@ -618,8 +613,6 @@ public final class XFPanelEntry {
      * @return view of this entry
      */
     public XFPanelView getView() {
-			return view;
-		}
-
-
+        return view;
+    }
 }

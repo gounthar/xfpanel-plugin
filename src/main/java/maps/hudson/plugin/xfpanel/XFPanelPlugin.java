@@ -10,6 +10,5 @@ public class XFPanelPlugin extends Plugin {
      * {@inheritDoc}
      */
     @Override
-    public void start() throws Exception {
-    }
+    public void start() throws Exception {}
 }
